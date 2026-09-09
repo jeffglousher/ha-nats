@@ -1,7 +1,7 @@
 name: NATS
-version: "0.4.0"
+version: "0.5.1"
 slug: pbscar_nats
-description: NATS messaging server with token authentication and persistent JetStream.
+description: NATS messaging with local TLS, client permissions, persistent JetStream and an HA settings console.
 arch:
   - amd64
   - aarch64
@@ -9,6 +9,14 @@ startup: services
 boot: auto
 backup: cold
 init: false
+ingress: true
+ingress_port: 8099
+panel_icon: mdi:server-security
+panel_title: NATS
+panel_admin: true
+map:
+  - type: ssl
+    read_only: true
 ports:
   4222/tcp: 4222
 ports_description:
