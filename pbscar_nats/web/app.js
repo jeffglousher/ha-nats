@@ -1,14 +1,15 @@
 'use strict';
 const $ = id => document.getElementById(id);
-let current, dirty = false;
+let current, dirty = false, saving = false;
 const numbers = ['file_gb','memory_mb','max_connections','max_payload_kb'];
 function show() {
+  if (!$('tls').checked) $('verify_clients').checked = false;
   $('tls-fields').hidden = !$('tls').checked;
   $('ca-field').hidden = !$('verify_clients').checked;
   $('token-fields').hidden = $('auth_mode').value !== 'token';
   $('users-fields').hidden = $('auth_mode').value !== 'users';
-  $('review').textContent = `${$('tls').checked ? 'Encrypted TLS' : 'Unencrypted local TCP'} · ${$('auth_mode').value === 'token' ? 'Shared token' : 'Individual users'} · ${$('file_gb').value} GiB file storage. Clients connect on port 4222.`;
-  $('save').disabled = !current || !$('confirm').checked;
+  $('review').textContent = `${$('tls').checked ? 'Encrypted TLS' : 'Unencrypted local TCP'} · ${$('auth_mode').value === 'token' ? 'Shared token' : 'Individual users'} · ${$('file_gb').value} GiB file storage. Use the HA Network port (4222 by default).`;
+  $('save').disabled = saving || !current || !$('confirm').checked;
 }
 function field(label, kind, value, key) {
   const l = document.createElement('label'); l.textContent = label;
@@ -45,6 +46,7 @@ function fill(state) {
   $('confirm').checked=false;dirty=false;show();
 }
 async function refresh() {
+  if(saving) return;
   if(dirty && !window.confirm('Discard unsaved changes and refresh discovery?')) return;
   try {const r=await fetch('./api/state');if(!r.ok)throw Error('Open this page from Home Assistant.');fill(await r.json());$('message').textContent='';}
   catch(e){$('message').textContent=e.message;$('message').className='error';}
@@ -53,14 +55,16 @@ $('settings').addEventListener('input',()=>{dirty=true;show();});
 $('settings').addEventListener('change',show);
 $('add-user').onclick=()=>{addUser();dirty=true;};$('refresh').onclick=refresh;
 $('settings').onsubmit=async e=>{
-  e.preventDefault();if(!current)return;
+  e.preventDefault();if(!current || saving)return;
   const cfg={...current}; numbers.forEach(k=>cfg[k]=Number($(k).value));
   ['tls','verify_clients'].forEach(k=>cfg[k]=$(k).checked);
   ['auth_mode','token','cert_file','key_file','client_ca'].forEach(k=>cfg[k]=$(k).value);
   cfg.users=[...$('users').children].map(card=>Object.fromEntries([...card.querySelectorAll('[data-key]')].map(input=>[input.dataset.key,['publish','subscribe'].includes(input.dataset.key)?input.value.split('\n').map(s=>s.trim()).filter(Boolean):input.value])));
+  saving=true; $('settings').querySelectorAll('input,select,textarea,button').forEach(el=>el.disabled=true);
   $('save').disabled=true;$('message').className='';$('message').textContent='Validating and applying…';
   try{const r=await fetch('./api/config',{method:'POST',headers:{'Content-Type':'application/json','X-NATS-Config':'1'},body:JSON.stringify(cfg)});const result=await r.json();if(!r.ok)throw Error(result.error);fill(result);$('message').textContent='Applied. NATS is running with these settings.';}
-  catch(error){$('message').textContent=error.message;$('message').className='error';show();}
+  catch(error){$('message').textContent=error.message;$('message').className='error';}
+  finally{saving=false;$('settings').querySelectorAll('input,select,textarea,button').forEach(el=>el.disabled=false);show();}
 };
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
 refresh();
