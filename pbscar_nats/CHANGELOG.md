@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0
+
+Add an administrator-only HA ingress settings console with certificate discovery, TLS and optional client certificate verification, per-user subject permissions, and storage/connection limits. Saved secrets remain hidden; settings are validated before applying. Existing token configuration remains compatible.
+
 ## 0.4.1
 
 Apply Alpine security updates during builds, including patched OpenSSL libraries.

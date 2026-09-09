@@ -7,7 +7,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 NETWORKS = tuple(ipaddress.ip_network(n) for n in ('10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'))
-PROXY_FILES = {'nats_nui/nginx.conf', 'nats_nui/tests/runtime.py'}
+PROXY_FILES = {'nats_nui/nginx.conf', 'nats_nui/tests/runtime.py', 'pbscar_nats/server.py', 'pbscar_nats/tests/console.py', 'pbscar_nats/tests/unit.py'}
 PATTERNS = {
     'personal Windows path': re.compile(r'(?i)[a-z]:[\\/]+(?:Users|Documents and Settings)[\\/]+[^\s]+'),
     'personal Unix path': re.compile(r'/(?:home|Users)/[A-Za-z0-9_.-]+/'),

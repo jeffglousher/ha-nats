@@ -22,6 +22,8 @@ if config['name']=='NUI':
     assert 'ports' not in config and 'webui' not in config
     assert config['watchdog'].endswith('/health')
 else:
+    assert config['ingress'] and config['panel_admin'] and config['ingress_port']==8099
+    assert config['map']==[{'type': 'ssl', 'read_only': True}]
     assert config['schema']['token']=='password'
     assert set(config['ports'])=={'4222/tcp'}
 docker=(folder/'Dockerfile').read_text()

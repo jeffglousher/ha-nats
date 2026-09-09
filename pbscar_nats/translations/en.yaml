@@ -1,15 +1,15 @@
 configuration:
   token:
-    name: Authentication token
+    name: Initial authentication token
     description: >-
-      Required. Use a unique random token of at least 32 characters.
-      Every client must supply this token. Changing it requires a restart
-      and an update to every client. Keep it private.
+      Required for first start: use a unique random token of 32–1024 characters.
+      After settings are saved in Web UI, manage credentials there;
+      this initial value no longer changes the active token. Keep it private.
   restore_mode:
     name: Snapshot restore mode
     description: >-
-      Leave off for normal use. Temporarily allows 10 GiB instead of 5 GiB
+      Leave off normally. Temporarily doubles the configured file-storage limit
       while restoring JetStream snapshots. Check free disk space first;
-      disable and restart after the restore, before resuming publishers.
+      disable and restart after restoring, before resuming publishers.
 network:
-  4222/tcp: NATS client connections (token required; trusted networks only)
+  4222/tcp: Authenticated NATS clients (configure optional TLS in Web UI)
