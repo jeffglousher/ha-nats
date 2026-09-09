@@ -1,5 +1,5 @@
 name: NATS
-version: "0.4.0"
+version: "0.4.1"
 slug: pbscar_nats
 description: NATS messaging server with token authentication and persistent JetStream.
 arch:
