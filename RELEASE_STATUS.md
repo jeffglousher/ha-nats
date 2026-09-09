@@ -1,4 +1,4 @@
-# Release readiness — 0.5.0
+# Release readiness — 0.5.1
 
 ## Verified
 

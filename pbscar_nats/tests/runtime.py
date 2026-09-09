@@ -52,9 +52,17 @@ for bad in ('true', 1, None, {}):
 p=start({'token':token,'restore_mode':False})
 try:
     wait_ready(p)
-    child=Path(f'/proc/{p.pid}/task/{p.pid}/children').read_text().split()[0]
-    uid=next(x for x in Path(f'/proc/{child}/status').read_text().splitlines() if x.startswith('Uid:'))
-    assert uid.split()[1]=='10001',uid
+    # /task/PID/children needs CONFIG_CHECKPOINT_RESTORE, absent on some HA kernels.
+    children=[]
+    for status in Path('/proc').glob('[0-9]*/status'):
+        try:
+            fields=dict(line.split(':',1) for line in status.read_text().splitlines() if ':' in line)
+        except (FileNotFoundError, ProcessLookupError):
+            continue
+        if fields.get('PPid','').strip()==str(p.pid):
+            children.append(fields)
+    assert children, 'broker child process missing'
+    assert any(fields['Uid'].split()[0]=='10001' for fields in children), 'broker is not unprivileged'
     assert Path('/data/server.conf').stat().st_mode & 0o777 == 0o600
     assert Path('/data/jetstream').stat().st_mode & 0o777 == 0o700
     try: connect('wrong-token')
