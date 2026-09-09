@@ -1,23 +1,47 @@
 configuration:
+  auth_mode:
+    name: Authentication
+    description: Choose a shared token or individual NATS users with subject permissions.
+      Save and restart to apply.
   token:
-    name: Initial authentication token
-    description: >-
-      Required for first start: use a unique random token of 32–1024 characters.
-      After settings are saved in Web UI, manage credentials there;
-      this initial value no longer changes the active token. Keep it private.
-  console_admin_user_ids:
-    name: Console administrators
-    description: >-
-      HA user IDs allowed to view and change NATS console settings. Each ID is
-      32 lowercase hexadecimal characters, available on the HA user details page.
-      An empty list disables console access while NATS continues serving clients.
-      Save and restart the app to activate additions or removals, then refresh
-      the console. The previous list remains active until restart. Only grant trusted users.
-  restore_mode:
-    name: Snapshot restore mode
-    description: >-
-      Leave off normally. Temporarily doubles the configured file-storage limit
-      while restoring JetStream snapshots. Check free disk space first;
-      disable and restart after restoring, before resuming publishers.
-network:
-  4222/tcp: Authenticated NATS clients (configure optional TLS in Web UI)
+    name: Shared token
+    description: 'Required in token mode: 32–1024 characters. All token holders have
+      the same broker permissions. Save and restart to apply.'
+  users:
+    name: NATS users
+    description: In users mode, define name, password (16–1024 characters), publish
+      and subscribe subject lists. Empty lists deny access. These are NATS credentials,
+      separate from HA users. Save and restart to apply.
+  tls:
+    name: TLS encryption
+    description: Enable only when the certificate and private key are available in
+      HA’s /ssl folder. Save and restart to apply.
+  cert_file:
+    name: Certificate filename
+    description: Certificate chain filename within /ssl; include a hostname clients
+      can verify. Save and restart to apply.
+  key_file:
+    name: Private key filename
+    description: Matching private key filename within /ssl. Save and restart to apply.
+  client_ca:
+    name: Client CA filename
+    description: CA certificate in /ssl used when client certificate verification
+      is enabled. Save and restart to apply.
+  verify_clients:
+    name: Require client certificates
+    description: Require a trusted client certificate in addition to NATS authentication.
+      TLS must be enabled. Save and restart to apply.
+  file_gb:
+    name: JetStream file allowance (GiB)
+    description: Maximum logical JetStream file storage. Not a quota for all app files,
+      logs or backups. Save and restart to apply.
+  memory_mb:
+    name: JetStream memory allowance (MiB)
+    description: Maximum memory-backed JetStream storage. Not a cap on total process
+      RAM. Save and restart to apply.
+  max_connections:
+    name: Maximum client connections
+    description: Maximum concurrent NATS client connections. Save and restart to apply.
+  max_payload_kb:
+    name: Maximum message size (KiB)
+    description: Maximum payload accepted for one message. Save and restart to apply.

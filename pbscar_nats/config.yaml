@@ -1,34 +1,53 @@
 name: NATS
-version: "0.5.2"
+version: 0.6.0
 slug: pbscar_nats
-description: NATS messaging with local TLS, client permissions, persistent JetStream and an HA settings console.
+description: NATS messaging with persistent JetStream, TLS and client permissions
+  configured in Home Assistant.
 arch:
-  - amd64
-  - aarch64
+- amd64
+- aarch64
 startup: services
 boot: auto
 backup: cold
 init: false
-ingress: true
-ingress_port: 8099
-panel_icon: mdi:server-security
-panel_title: NATS
-panel_admin: true
 map:
-  - type: ssl
-    read_only: true
+- type: ssl
+  read_only: true
 ports:
   4222/tcp: 4222
 ports_description:
   4222/tcp: Authenticated NATS clients
 watchdog: tcp://[HOST]:[PORT:4222]
 options:
-  token: ""
-  restore_mode: false
-  console_admin_user_ids: []
+  auth_mode: token
+  token: ''
+  users: []
+  tls: false
+  cert_file: fullchain.pem
+  key_file: privkey.pem
+  client_ca: ''
+  verify_clients: false
+  file_gb: 5
+  memory_mb: 64
+  max_connections: 1024
+  max_payload_kb: 1024
 schema:
+  auth_mode: list(token|users)
   token: password
-  restore_mode: bool
-  console_admin_user_ids:
-    - "match(^[0-9a-f]{32}$)"
+  users:
+  - name: str
+    password: password
+    publish:
+    - str
+    subscribe:
+    - str
+  tls: bool
+  cert_file: str
+  key_file: str
+  client_ca: str
+  verify_clients: bool
+  file_gb: int(1,1024)
+  memory_mb: int(16,4096)
+  max_connections: int(1,65536)
+  max_payload_kb: int(1,8192)
 url: https://github.com/jeffglousher/ha-nats

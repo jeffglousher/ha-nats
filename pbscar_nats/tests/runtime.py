@@ -46,12 +46,13 @@ def wait_ready(p):
 for bad in ('','short',None,17,'x'*1025):
     p=start({'token':bad,'restore_mode':False})
     assert p.wait(timeout=5)!=0
-for bad in ('true', 1, None, {}):
-    p=start({'token':token,'restore_mode':bad})
-    assert p.wait(timeout=5)!=0
-p=start({'token':token,'restore_mode':False})
+p=start({'token':token,'file_gb':2,'memory_mb':32,'max_connections':128,'max_payload_kb':512})
 try:
     wait_ready(p)
+    rendered=json.loads(Path('/data/server.conf').read_text())
+    assert rendered['jetstream']['max_file_store']==2*1024**3
+    assert rendered['jetstream']['max_mem_store']==32*1024**2
+    assert rendered['max_connections']==128 and rendered['max_payload']==512*1024
     # /task/PID/children needs CONFIG_CHECKPOINT_RESTORE, absent on some HA kernels.
     children=[]
     for status in Path('/proc').glob('[0-9]*/status'):
@@ -72,7 +73,7 @@ try:
     request('release.test',{'test':'persist'})
     assert request('$JS.API.STREAM.INFO.RELEASE_TEST',{})['state']['messages']==1
 finally: stop(p)
-p=start({'token':token,'restore_mode':False})
+p=start({'token':token,'file_gb':2,'memory_mb':32,'max_connections':128,'max_payload_kb':512})
 try:
     wait_ready(p)
     assert request('$JS.API.STREAM.INFO.RELEASE_TEST',{})['state']['messages']==1

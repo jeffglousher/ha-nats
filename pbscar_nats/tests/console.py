@@ -1,5 +1,4 @@
 """Security and real NATS TLS/ACL regressions; disposable image-build data only."""
-import copy
 import importlib.util
 import json
 from pathlib import Path
@@ -9,8 +8,6 @@ import ssl
 import subprocess
 import tempfile
 import time
-import urllib.error
-import urllib.request
 
 spec = importlib.util.spec_from_file_location('console', '/opt/nats-console/server.py')
 console = importlib.util.module_from_spec(spec)
@@ -28,9 +25,6 @@ for patch in ({'tls': 'true'}, {'max_connections': True}, {'file_gb': 0},
         raise AssertionError('invalid configuration accepted')
 user = dict(name='reader', password='p' * 32, publish=[], subscribe=['allowed.>'])
 cfg = console.validate({**base, 'auth_mode': 'users', 'users': [user]})
-masked = copy.deepcopy(cfg)
-masked['users'][0]['password'] = ''
-assert console.validate(masked, cfg)['users'][0]['password'] == user['password']
 for subject in ('a..b', 'a.>.b', 'a*', 'a b', ''):
     try:
         console.subjects([subject])
@@ -38,17 +32,13 @@ for subject in ('a..b', 'a.>.b', 'a*', 'a b', ''):
         pass
     else:
         raise AssertionError('invalid subject accepted')
-console.CURRENT = cfg
-state = console.public_state()
-assert token not in json.dumps(state) and user['password'] not in json.dumps(state)
-
 Path('/ssl').mkdir(exist_ok=True)
 subprocess.run(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1',
                 '-keyout', '/ssl/privkey.pem', '-out', '/ssl/fullchain.pem',
                 '-subj', '/CN=localhost', '-addext', 'subjectAltName=DNS:localhost'],
                check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 cfg = console.validate({**cfg, 'tls': True})
-Path('/data/options.json').write_text(json.dumps({'token': token, 'restore_mode': False}))
+Path('/data/options.json').write_text(json.dumps(cfg))
 Path('/data/console.json').write_text(json.dumps(cfg))
 log = tempfile.TemporaryFile()
 p = subprocess.Popen(['/run.sh'], stdout=log, stderr=log)
@@ -104,13 +94,20 @@ try:
         else:
             stream.close(); sock.close()
             raise AssertionError('invalid TLS/auth client accepted')
-    req = urllib.request.Request('http://127.0.0.1:8099/api/state', headers={'X-Forwarded-For': '172.30.32.2'})
-    try:
-        urllib.request.urlopen(req, timeout=2)
-    except urllib.error.HTTPError as error:
-        assert error.code == 403
+    for _ in range(30):
+        assert p.poll() is None, 'broker exited during startup completion'
+        if not Path('/data/console.json').exists():
+            break
+        time.sleep(.1)
     else:
-        raise AssertionError('direct or spoofed ingress access accepted')
+        raise AssertionError('matched legacy configuration was not retired')
+    try:
+        unexpected = socket.create_connection(('127.0.0.1', 8099), 1)
+    except ConnectionRefusedError:
+        pass
+    else:
+        unexpected.close()
+        raise AssertionError('removed settings UI is still listening')
 finally:
     p.send_signal(signal.SIGTERM)
     p.wait(timeout=10)
@@ -118,4 +115,4 @@ finally:
 log.seek(0)
 logs = log.read()
 assert token.encode() not in logs and user['password'].encode() not in logs
-print('PASS: TLS trust/hostname and user auth enforced; empty ACL denies; secrets redacted; ingress spoof rejected')
+print('PASS: TLS trust/hostname and user auth enforced; empty ACL denies; credentials absent from logs; no HTTP management listener; legacy settings migrated')
