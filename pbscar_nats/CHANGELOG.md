@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1
+
+Apply Alpine security updates during builds, including patched OpenSSL libraries.
+
 ## 0.4.0
 
 Update the pinned server to NATS 2.14.6. Validate restore-mode types and token size before startup. Expand negative authentication and file-permission checks.
