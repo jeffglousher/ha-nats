@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.2
+
+- Enforce an administrator-configured HA identity allowlist for console reads and writes. Sidebar visibility alone does not authorize access. Existing installs must add trusted user IDs in Configuration, save and restart the app. Access-list changes require a restart; NATS continues running while the list is empty.
+- Recover the exact deployed configuration and TLS bytes after a failed apply, even if the source certificate files have changed or disappeared.
+
 ## 0.5.1
 
 - Make the non-root runtime check compatible with Home Assistant kernels that omit the optional process-children interface.

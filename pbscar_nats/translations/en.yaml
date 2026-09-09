@@ -5,6 +5,14 @@ configuration:
       Required for first start: use a unique random token of 32–1024 characters.
       After settings are saved in Web UI, manage credentials there;
       this initial value no longer changes the active token. Keep it private.
+  console_admin_user_ids:
+    name: Console administrators
+    description: >-
+      HA user IDs allowed to view and change NATS console settings. Each ID is
+      32 lowercase hexadecimal characters, available on the HA user details page.
+      An empty list disables console access while NATS continues serving clients.
+      Save and restart the app to activate additions or removals, then refresh
+      the console. The previous list remains active until restart. Only grant trusted users.
   restore_mode:
     name: Snapshot restore mode
     description: >-

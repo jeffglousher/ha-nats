@@ -5,7 +5,15 @@
 1. In **Configuration**, enter a unique random token of 32–1024 characters.
 2. Leave **Snapshot restore mode** off, save and start the app.
 3. Enable **Start on boot** and **Watchdog** on the Info page.
-4. Open **Web UI** as an HA administrator to configure encryption, access and capacity.
+4. In **Configuration → Console administrators**, add your HA user ID (32 lowercase hexadecimal characters, shown on your HA user details page), save and restart the app, then open **Web UI** to configure encryption, access and capacity.
+
+Only listed HA identities may read or change console settings. An empty list
+keeps NATS running but denies console access. HA administrators manage this list
+in Configuration; the console cannot grant access. **Save and restart the app**
+after changing this list: Supervisor refreshes the runtime options file on startup.
+Until that restart, the previous list remains active, including removed identities. The sidebar administrator setting alone is not
+an authorization boundary. Only select trusted identities, and remove them here
+when access should end (changing their HA role does not change this explicit list).
 
 Existing installations retain their token, port and JetStream data on upgrade.
 TLS is initially off. Clients connect to `nats://HOME_ASSISTANT_HOST:4222`,
@@ -28,7 +36,7 @@ values. A renamed or new user requires a new password.
 
 Applying validates the configuration and restarts NATS briefly. Invalid input
 leaves the running broker alone. A failed restart or save attempts to restore
-the previous settings; check Logs if recovery fails. Clients must reconnect.
+the exact previously deployed configuration and certificate bytes; check Logs if recovery fails. Renewing or removing source files in `/ssl` does not change the rollback copy. Clients must reconnect.
 Keep an app backup before changing access or encryption.
 
 ## Local TLS using the HA certificate
@@ -97,7 +105,7 @@ file allowance (5 to 10 GiB by default). Enable only for restore staging, then
 disable and restart before resuming publishers. It does not change stream limits.
 
 TCP 4222 is the only exposed port. The settings console is available only through
-HA admin ingress, with no direct LAN port. This app does not configure clustering,
+HA ingress with an explicit HA identity allowlist, with no direct LAN port. This app does not configure clustering,
 leaf nodes, WebSockets, a monitoring port, accounts or JWT/NKey authentication.
 Keep the broker on your intended local network; it does not configure a firewall.
 

@@ -201,15 +201,43 @@ def stop_broker():
             BROKER.wait(timeout=5)
 
 
+def deployed_files():
+    """Capture the exact running configuration, independent of renewed /ssl files."""
+    paths = [DATA / 'server.conf', *(DATA / 'tls' / name for name in ('cert.pem', 'key.pem', 'ca.pem'))]
+    return {path: path.read_bytes() if path.exists() else None for path in paths}
+
+
+def restore_files(snapshot):
+    for path, content in snapshot.items():
+        if content is None:
+            path.unlink(missing_ok=True)
+        else:
+            atomic_file(path, content, broker_readable=True)
+
+
+def console_users():
+    # Only HA's administrator-controlled options can grant console access.
+    # Re-read the runtime file; Supervisor refreshes it when the app restarts.
+    try:
+        users = json.loads((DATA / 'options.json').read_text()).get('console_admin_user_ids', [])
+        if not isinstance(users, list) or len(users) > 64 or any(
+            not isinstance(user, str) or not re.fullmatch(r'[0-9a-f]{32}', user) for user in users
+        ):
+            return ()
+        return tuple(users)
+    except (OSError, ValueError, AttributeError):
+        return ()
+
+
 def apply(value):
     global CURRENT
     with LOCK:
         new = validate(value, CURRENT)
-        previous = CURRENT
+        snapshot = deployed_files()
         try:
             write_config(new)
         except Exception:
-            write_config(previous)
+            restore_files(snapshot)
             raise
         try:
             stop_broker()
@@ -219,7 +247,7 @@ def apply(value):
         except Exception:
             log('Apply failed. Attempting to restore the previous broker configuration.')
             stop_broker()
-            write_config(previous)
+            restore_files(snapshot)
             start_broker()
             raise
         log('Configuration applied. Broker restarted; clients may reconnect.')
@@ -247,13 +275,19 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, *_):
         pass
 
-    def allowed(self):
+    def ingress_peer(self):
         # Check the actual TCP peer, never caller-controlled forwarded headers.
         try:
             peer = ipaddress.ip_address(self.client_address[0])
         except ValueError:
             return False
         return peer == ipaddress.ip_address('172.30.32.2') and self.headers.get('Sec-Fetch-Site') != 'cross-site'
+
+    def allowed(self):
+        # Supervisor removes spoofed identity headers and supplies the session ID.
+        # panel_admin only hides the sidebar item; it is not authorization.
+        identities = self.headers.get_all('X-Remote-User-Id', [])
+        return self.ingress_peer() and len(identities) == 1 and identities[0] in console_users()
 
     def respond(self, code, content, mime='application/json'):
         body = content if isinstance(content, bytes) else json.dumps(content).encode()
@@ -266,10 +300,13 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        if not self.allowed():
+        if not self.ingress_peer():
             self.respond(403, {'error': 'Open this page through Home Assistant ingress.'})
             return
         if self.path == '/api/state':
+            if not self.allowed():
+                self.respond(403, {'error': 'Console access is not enabled for your HA identity. Ask an HA administrator to add your user ID to Console administrators in the app Configuration, save and restart the app, then refresh.'})
+                return
             self.respond(200, public_state())
         elif self.path in ('/', '/app.js', '/style.css'):
             name = {'/': 'index.html', '/app.js': 'app.js', '/style.css': 'style.css'}[self.path]
