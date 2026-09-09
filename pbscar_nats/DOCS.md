@@ -56,6 +56,8 @@ HA. The file allowance is a logical JetStream limit, not a filesystem quota for
 all files, logs or backups; the memory allowance is not a total process RAM cap.
 HA apps share host resources, so retain free space for HA and other apps.
 
+Streams with an explicit maximum byte size reserve that allowance from the broker budget, even when they currently hold little data. If the sum of file-stream limits consumes the entire file allowance, NATS rejects new file streams and buckets with "insufficient storage resources available". Compare the sum of configured stream limits with the broker allowance, and explicitly adjust one of those limits to leave headroom. Free host disk alone does not resolve this error.
+
 Applications create their own streams and retention policies. Set stream size
 and age limits for each workload. At a limit, publishing can fail or older
 messages can be discarded according to the stream policy. Lowering the broker
