@@ -1,5 +1,5 @@
 name: NATS
-version: 0.6.0
+version: 0.6.1
 slug: pbscar_nats
 description: NATS messaging with persistent JetStream, TLS and client permissions
   configured in Home Assistant.
@@ -31,6 +31,7 @@ options:
   memory_mb: 64
   max_connections: 1024
   max_payload_kb: 1024
+  provision_nui: true
 schema:
   auth_mode: list(token|users)
   token: password
@@ -50,4 +51,7 @@ schema:
   memory_mb: int(16,4096)
   max_connections: int(1,65536)
   max_payload_kb: int(1,8192)
+  provision_nui: bool
 url: https://github.com/jeffglousher/ha-nats
+hassio_api: true
+hassio_role: default

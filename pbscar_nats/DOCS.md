@@ -94,3 +94,28 @@ snapshot restore and console-administrator options have no effect.
 
 Logs use standard app output; message tracing is disabled. For support include
 the app version, platform and sanitized errors, never credentials or message data.
+
+## Automatic local connection setup
+
+When both companion apps are installed from their published repositories, NUI
+imports a local connection into an untouched database. It uses the broker's HA
+internal DNS name, not localhost or a LAN IP. NATS must be running with a valid
+shared token and TLS disabled. TLS and individual-user deployments use NUI's
+normal connection editor; provisioning never weakens authentication or TLS.
+
+HA's Services API currently supports MQTT and MySQL, not NATS. These apps use
+the documented internal app network and default-role Supervisor metadata API.
+The NATS provisioning listener has no host port and accepts only the actual
+companion NUI app address verified against Supervisor. Forwarded identity/IP
+headers are not trusted. This trusts HA's isolated app network, not a separate
+cryptographic peer identity. Other apps cannot retrieve the connection through
+this endpoint. NUI has no manager role or access to other apps' options.
+
+Once a connection exists or provisioning is attempted, a durable completion
+marker prevents future imports. Deleting or editing a connection in NUI is
+permanent: restarts and upgrades do not recreate or overwrite it. An interrupted
+import may need manual completion in NUI rather than an unsafe automatic retry.
+Installing NATS later is supported while NUI remains untouched. A clean NUI
+uninstall removes both its database and this marker and permits first setup again.
+Broker startup settings remain solely in the NATS app Configuration; connection
+settings live solely in NUI. The NATS Provision local NUI option disables sharing.

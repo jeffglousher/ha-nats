@@ -5,17 +5,17 @@ configuration:
       Save and restart to apply.
   token:
     name: Shared token
-    description: 'Required in token mode: 32–1024 characters. All token holders have
-      the same broker permissions. Save and restart to apply.'
+    description: 'Required in token mode: 32â€“1024 characters. All token holders
+      have the same broker permissions. Save and restart to apply.'
   users:
     name: NATS users
-    description: In users mode, define name, password (16–1024 characters), publish
+    description: In users mode, define name, password (16â€“1024 characters), publish
       and subscribe subject lists. Empty lists deny access. These are NATS credentials,
       separate from HA users. Save and restart to apply.
   tls:
     name: TLS encryption
     description: Enable only when the certificate and private key are available in
-      HA’s /ssl folder. Save and restart to apply.
+      HAâ€™s /ssl folder. Save and restart to apply.
   cert_file:
     name: Certificate filename
     description: Certificate chain filename within /ssl; include a hostname clients
@@ -45,3 +45,9 @@ configuration:
   max_payload_kb:
     name: Maximum message size (KiB)
     description: Maximum payload accepted for one message. Save and restart to apply.
+  provision_nui:
+    name: Provision local NUI
+    description: Allow the companion NUI app to import this local token-authenticated
+      connection on first setup. Internal app network only. Existing NUI connections
+      are never overwritten. TLS and individual-user setups require configuration
+      in NUI. Save and restart to apply.

@@ -6,12 +6,14 @@ ARG BUILD_VERSION
 ARG BUILD_ARCH
 LABEL io.hass.type="addon" io.hass.version="${BUILD_VERSION}" io.hass.arch="${BUILD_ARCH}"
 COPY run.sh /run.sh
-COPY server.py /opt/nats-console/server.py
+COPY server.py provision.py /opt/nats-console/
 RUN chmod 755 /run.sh
 ENTRYPOINT ["/run.sh"]
 
 FROM runtime AS validation
 RUN apk upgrade --no-cache && apk add --no-cache python3
+COPY tests/provision.py /provision-test.py
+RUN python3 /provision-test.py
 COPY tests/runtime.py /runtime-test.py
 COPY tests/console.py /console-test.py
 COPY tests/unit.py /unit-test.py
