@@ -52,7 +52,8 @@ for bad in ('true', 1, None, {}):
 p=start({'token':token,'restore_mode':False})
 try:
     wait_ready(p)
-    uid=next(x for x in Path(f'/proc/{p.pid}/status').read_text().splitlines() if x.startswith('Uid:'))
+    child=Path(f'/proc/{p.pid}/task/{p.pid}/children').read_text().split()[0]
+    uid=next(x for x in Path(f'/proc/{child}/status').read_text().splitlines() if x.startswith('Uid:'))
     assert uid.split()[1]=='10001',uid
     assert Path('/data/server.conf').stat().st_mode & 0o777 == 0o600
     assert Path('/data/jetstream').stat().st_mode & 0o777 == 0o700
