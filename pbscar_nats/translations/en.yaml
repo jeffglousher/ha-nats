@@ -10,8 +10,9 @@ configuration:
     description: >-
       HA user IDs allowed to view and change NATS console settings. Each ID is
       32 lowercase hexadecimal characters, available on the HA user details page.
-      An empty list disables console access without stopping NATS. Save here and
-      refresh the console; no broker restart is needed. Only grant trusted users.
+      An empty list disables console access while NATS continues serving clients.
+      Save and restart the app to activate additions or removals, then refresh
+      the console. The previous list remains active until restart. Only grant trusted users.
   restore_mode:
     name: Snapshot restore mode
     description: >-

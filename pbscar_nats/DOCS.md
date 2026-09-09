@@ -5,12 +5,13 @@
 1. In **Configuration**, enter a unique random token of 32–1024 characters.
 2. Leave **Snapshot restore mode** off, save and start the app.
 3. Enable **Start on boot** and **Watchdog** on the Info page.
-4. In **Configuration → Console administrators**, add your HA user ID (32 lowercase hexadecimal characters, shown on your HA user details page), save, then open **Web UI** to configure encryption, access and capacity.
+4. In **Configuration → Console administrators**, add your HA user ID (32 lowercase hexadecimal characters, shown on your HA user details page), save and restart the app, then open **Web UI** to configure encryption, access and capacity.
 
 Only listed HA identities may read or change console settings. An empty list
 keeps NATS running but denies console access. HA administrators manage this list
-in Configuration; the console cannot grant access. Changes take effect on the next
-request without a broker restart. The sidebar administrator setting alone is not
+in Configuration; the console cannot grant access. **Save and restart the app**
+after changing this list: Supervisor refreshes the runtime options file on startup.
+Until that restart, the previous list remains active, including removed identities. The sidebar administrator setting alone is not
 an authorization boundary. Only select trusted identities, and remove them here
 when access should end (changing their HA role does not change this explicit list).
 

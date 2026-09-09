@@ -77,7 +77,7 @@ class ConfigurationTests(unittest.TestCase):
             for name, value in headers:
                 handler.headers[name] = value
             self.assertEqual(handler.allowed(), expected)
-        # Revoking access must affect the very next request, without restart.
+        # Re-read the runtime file after Supervisor has refreshed it on app restart.
         (self.data / 'options.json').write_text(json.dumps({'console_admin_user_ids': []}))
         self.assertFalse(handler.allowed())
 

@@ -217,7 +217,7 @@ def restore_files(snapshot):
 
 def console_users():
     # Only HA's administrator-controlled options can grant console access.
-    # Read every request so removing an identity revokes access immediately.
+    # Re-read the runtime file; Supervisor refreshes it when the app restarts.
     try:
         users = json.loads((DATA / 'options.json').read_text()).get('console_admin_user_ids', [])
         if not isinstance(users, list) or len(users) > 64 or any(
@@ -305,7 +305,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         if self.path == '/api/state':
             if not self.allowed():
-                self.respond(403, {'error': 'Console access is not enabled for your HA identity. Ask an HA administrator to add your user ID to Console administrators in the app Configuration, then refresh.'})
+                self.respond(403, {'error': 'Console access is not enabled for your HA identity. Ask an HA administrator to add your user ID to Console administrators in the app Configuration, save and restart the app, then refresh.'})
                 return
             self.respond(200, public_state())
         elif self.path in ('/', '/app.js', '/style.css'):
