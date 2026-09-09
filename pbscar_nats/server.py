@@ -18,7 +18,7 @@ STOP = threading.Event()
 DEFAULTS = dict(auth_mode='token', token='', users=[], tls=False,
                 cert_file='fullchain.pem', key_file='privkey.pem', client_ca='',
                 verify_clients=False, file_gb=5, memory_mb=64,
-                max_connections=1024, max_payload_kb=1024)
+                max_connections=1024, max_payload_kb=1024, provision_nui=True)
 
 
 class Invalid(ValueError):
@@ -59,7 +59,7 @@ def validate(value):
     cfg.update(copy.deepcopy(value))
     if cfg['auth_mode'] not in ('token', 'users'):
         raise Invalid('Choose shared token or individual users.')
-    for key in ('tls', 'verify_clients'):
+    for key in ('tls', 'verify_clients', 'provision_nui'):
         if type(cfg[key]) is not bool:
             raise Invalid('Encryption switches must be true or false.')
     for key, low, high in [('file_gb', 1, 1024), ('memory_mb', 16, 4096),
@@ -69,7 +69,7 @@ def validate(value):
     if not isinstance(cfg['token'], str) or len(cfg['token']) > 1024:
         raise Invalid('Invalid shared token.')
     if cfg['auth_mode'] == 'token' and len(cfg['token']) < 32:
-        raise Invalid('Set a shared token of 32–1024 characters.')
+        raise Invalid('Set a shared token of 32â€“1024 characters.')
     if not isinstance(cfg['users'], list) or len(cfg['users']) > 64:
         raise Invalid('Use at most 64 users.')
     names = set()
@@ -81,7 +81,7 @@ def validate(value):
             raise Invalid('Usernames must be unique and use letters, numbers, dots, underscores or hyphens.')
         names.add(name)
         if not isinstance(user['password'], str) or not 16 <= len(user['password']) <= 1024:
-            raise Invalid('Each user needs a password of 16–1024 characters.')
+            raise Invalid('Each user needs a password of 16â€“1024 characters.')
         subjects(user['publish'])
         subjects(user['subscribe'])
     if cfg['auth_mode'] == 'users' and not cfg['users']:
@@ -173,7 +173,7 @@ def write_config(cfg):
 
 def start_broker():
     global BROKER
-    BROKER = subprocess.Popen(['su-exec', 'natsapp', 'nats-server', '-c', '/data/server.conf'])
+    BROKER = subprocess.Popen(['su-exec', 'natsapp', 'nats-server', '-c', '/data/server.conf'], env={key: value for key, value in os.environ.items() if key != 'SUPERVISOR_TOKEN'})
     time.sleep(0.3)
     if BROKER.poll() is not None:
         raise Invalid('NATS could not start with these settings.')
@@ -200,12 +200,16 @@ def main():
         STOP.set()
     signal.signal(signal.SIGTERM, shutdown)
     signal.signal(signal.SIGINT, shutdown)
+    enrollment = None
     try:
         cfg = bootstrap()
         write_config(cfg)
         if STOP.is_set():
             return
         start_broker()
+        if cfg['provision_nui'] and os.environ.get('SUPERVISOR_TOKEN'):
+            import provision
+            enrollment = provision.start(cfg)
         # Remove the superseded secret-bearing store only after a verified match
         # and successful start. HA Configuration is now the sole source of truth.
         (DATA / 'console.json').unlink(missing_ok=True)
@@ -214,6 +218,9 @@ def main():
             if BROKER.poll() is not None:
                 raise Invalid('NATS exited unexpectedly. Stopping for Supervisor recovery.')
     finally:
+        if enrollment:
+            enrollment.shutdown()
+            enrollment.server_close()
         stop_broker()
 
 

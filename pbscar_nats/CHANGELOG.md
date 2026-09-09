@@ -1,3 +1,9 @@
+# 0.6.1
+
+- Add one-time local NUI connection provisioning over HA internal app DNS.
+- Keep provisioning on the internal network with default-role metadata access; no host port or manager privileges.
+- Preserve existing connections, edits and deletions. Custom authentication/TLS uses normal NUI setup.
+
 # 0.6.0
 
 - Move all broker startup settings into HA Configuration: authentication, user
