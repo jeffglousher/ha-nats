@@ -7,7 +7,6 @@ ARG BUILD_ARCH
 LABEL io.hass.type="addon" io.hass.version="${BUILD_VERSION}" io.hass.arch="${BUILD_ARCH}"
 COPY run.sh /run.sh
 COPY server.py /opt/nats-console/server.py
-COPY web /opt/nats-console/web
 RUN chmod 755 /run.sh
 ENTRYPOINT ["/run.sh"]
 

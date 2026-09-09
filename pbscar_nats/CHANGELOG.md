@@ -1,3 +1,13 @@
+# 0.6.0
+
+- Move all broker startup settings into HA Configuration: authentication, user
+  permissions, TLS, JetStream allowances and connection/message limits.
+- Remove the duplicate settings UI and its HTTP listener.
+- Remove snapshot restore mode; storage limits no longer double implicitly.
+- Fail safely on differing legacy console settings until explicitly migrated;
+  retire the old settings file after a matching successful start.
+- Keep NUI and NATS clients responsible for permitted live administration.
+
 # Changelog
 
 ## 0.5.2

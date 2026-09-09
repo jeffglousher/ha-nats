@@ -1,150 +1,94 @@
 # NATS
 
-## First start
+## Set up
 
-1. In **Configuration**, enter a unique random token of 32–1024 characters.
-2. Leave **Snapshot restore mode** off, save and start the app.
+1. In **Configuration**, choose shared-token authentication and enter a random
+   token of 32–1024 characters, or select users and add individual NATS credentials.
+2. Set storage allowances and any TLS options, save, then start the app.
 3. Enable **Start on boot** and **Watchdog** on the Info page.
-4. In **Configuration → Console administrators**, add your HA user ID (32 lowercase hexadecimal characters, shown on your HA user details page), save and restart the app, then open **Web UI** to configure encryption, access and capacity.
+4. Connect NUI or your application to `nats://HOME_ASSISTANT_HOST:4222` using
+   the configured credentials. The Network section controls the host port.
 
-Only listed HA identities may read or change console settings. An empty list
-keeps NATS running but denies console access. HA administrators manage this list
-in Configuration; the console cannot grant access. **Save and restart the app**
-after changing this list: Supervisor refreshes the runtime options file on startup.
-Until that restart, the previous list remains active, including removed identities. The sidebar administrator setting alone is not
-an authorization boundary. Only select trusted identities, and remove them here
-when access should end (changing their HA role does not change this explicit list).
+**HA Configuration is the only source of broker startup settings.** Save and
+restart to apply changes, including renewed certificates. Clients must reconnect.
+There is no separate NATS settings web page. Install the separate
+[NUI app](https://github.com/jeffglousher/ha-nats-nui) for live administration.
 
-Existing installations retain their token, port and JetStream data on upgrade.
-TLS is initially off. Clients connect to `nats://HOME_ASSISTANT_HOST:4222`,
-with the token supplied separately from the URL. Use the port selected under
-**Network** if you changed it.
+## Access and live administration
 
-## Settings and discovery
+Shared-token mode gives every token holder the same unrestricted NATS access.
+For different access levels, use individual users with explicit publish and
+subscribe subject lists. Empty lists deny that operation; `*` matches one subject
+segment and `>` matches the remaining segments at the end. Passwords must be
+16–1024 characters. Do not leave a password blank to preserve an earlier value:
+HA Configuration contains the complete configuration.
 
-The console shows broker status, the active encryption setting and available
-certificate filenames. **Refresh discovery** rechecks these without restarting
-NATS; it asks before discarding unsaved edits. TLS, user permissions and advanced
-limits appear progressively as you select them. Certificate contents, private
-keys and saved passwords are never returned to the browser.
+NUI and applications can publish and subscribe, create and configure streams,
+manage consumers and administer key/value data when their NATS permissions allow
+it. JetStream administration uses `$JS.API.>` requests and reply inboxes;
+grant only the API subjects and reply subscriptions needed by each application.
+For an unrestricted administrator, allow `>` for both publish and subscribe.
+Do not give those permissions to a read-only consumer.
 
-After the first successful **Apply settings**, the console's settings become
-authoritative, including credentials. The token in HA's Configuration tab is
-only the initial bootstrap value; changing it then has no effect. Use Web UI to
-rotate the active token or user passwords. Blank secret fields preserve saved
-values. A renamed or new user requires a new password.
+HA users and NATS users are separate identities. NUI's HA access allowlist grants
+access to its shared console; the credentials saved in each NUI connection control
+broker permissions. Do not treat one shared NUI installation as per-HA-user NATS
+isolation. Broker credentials, server-wide capacity and TLS are startup settings,
+not settings that NUI's stream API changes.
 
-Applying validates the configuration and restarts NATS briefly. Invalid input
-leaves the running broker alone. A failed restart or save attempts to restore
-the exact previously deployed configuration and certificate bytes; check Logs if recovery fails. Renewing or removing source files in `/ssl` does not change the rollback copy. Clients must reconnect.
-Keep an app backup before changing access or encryption.
+## TLS
 
-## Local TLS using the HA certificate
+Place a certificate chain and matching private key in HA's shared `/ssl` folder.
+Set their filenames in Configuration and enable TLS. Clients must trust the CA
+and connect using a hostname in the certificate. The app validates the pair,
+expiry and path containment and uses TLS 1.2 or newer.
 
-The app mounts HA's shared `/ssl` folder read-only. Choose the certificate chain
-and matching private-key filenames there, commonly `fullchain.pem` and
-`privkey.pem`. A certificate used by a separate reverse proxy is not necessarily
-present in that folder. An empty discovery list means no files are available;
-the app does not obtain or issue certificates.
+Optional client certificate verification also requires a client CA filename;
+clients still need NATS credentials. HA Cloud access does not populate `/ssl` or
+provide TLS for the NATS TCP listener. Certificate renewal takes effect on restart.
+The SSL mount is read-only. Include source certificates in your backup plan.
 
-Enable **Encrypt client connections with TLS**, select the pair and apply.
-The app checks that the files stay inside `/ssl`, the pair loads and the leaf
-certificate has not expired. Clients still must verify the issuing CA and the
-hostname: connect using a hostname listed in the certificate, for example
-`tls://nats.example.net:4222`. An IP address requires a matching IP certificate
-SAN. Follow your client's TLS settings if it does not use a `tls://` URL.
-Do not turn off hostname or CA verification to make a connection work.
+## Storage and resource limits
 
-TLS 1.2 or newer is required. NATS sends its initial protocol INFO before the
-TLS handshake; credentials and subsequent traffic follow the encrypted handshake.
-TLS is required for every client once enabled; there is no second plaintext port.
-After certificate renewal, **restart the app or apply settings again** to load
-the replacement files. Automatic certificate reload is not implemented.
+Defaults are **5 GiB JetStream file storage**, **64 MiB memory-backed storage**,
+**1024 connections** and **1024 KiB per message**. Configure these explicitly in
+HA. The file allowance is a logical JetStream limit, not a filesystem quota for
+all files, logs or backups; the memory allowance is not a total process RAM cap.
+HA apps share host resources, so retain free space for HA and other apps.
 
-Under **Require client certificates**, select a client CA to require a trusted
-certificate from every client as well as the configured token or user/password.
-Configure all clients first. This is optional mutual TLS, not a replacement for
-NATS subject permissions. HA ingress protects the settings page separately;
-it does not encrypt NATS client traffic.
+Applications create their own streams and retention policies. Set stream size
+and age limits for each workload. At a limit, publishing can fail or older
+messages can be discarded according to the stream policy. Lowering the broker
+allowance below existing usage can prevent normal operation.
 
-## Authentication and subject permissions
+There is no automatic storage-limit expansion during restores. If a restore
+needs more capacity, explicitly raise the file allowance and restart, perform
+the restore, then return to an allowance that fits the resulting data.
 
-- **Shared token:** one credential grants full access to all subjects and streams.
-- **Individual users:** each client has a username, a 16–1024 character password,
-  and separate publish and subscribe allow lists. Empty lists deny that operation.
-  Up to 64 users and 128 subjects per permission list are supported.
+## Updating and restoring
 
-Enter one subject per line. `sensors.*` matches one segment; `sensors.>` matches
-one or more trailing segments. `>` grants unrestricted access for that operation.
-Switching between modes replaces the active authentication method; it does not
-accept both at once. Use separate credentials for independently managed clients.
+Updates and restarts preserve JetStream data. Take a cold app backup before
+configuration changes and restore the full app backup to recover settings and
+data together. Uninstalling can remove app data.
 
-Request/reply clients also need permissions for their request subjects and reply
-inboxes. JetStream clients use `$JS.API.>` and reply subjects such as `_INBOX.>`;
-consumer delivery and acknowledgement subjects depend on their configuration.
-Grant only the subjects your application needs. The console does not infer
-permissions from traffic or silently broaden a denied operation.
-
-Use NUI's **ALL → NEW** to save multiple server connections. Give each connection
-its own URL and credentials; HA login and NATS authentication are separate.
-Update saved connections after changing this server's authentication or TLS.
-
-## Capacity, storage and network
-
-Default JetStream allowances are **5 GiB file storage** and **64 MiB memory**.
-The console supports 1–1024 GiB file storage, 16–4096 MiB memory, 1–65536 client
-connections (default 1024), and 1–8192 KiB message size (default 1024).
-These limits do not reserve host resources. Keep room for HA, backups and other
-apps. Existing streams must fit any reduced limit. Applications create their own
-streams, consumers and retention rules; the app does not create them automatically.
-
-At a stream limit, publishing can fail or old data can be discarded according to
-its policy. Restarting and updating preserve stored data; uninstalling can remove it.
-**Snapshot restore mode** in HA Configuration temporarily doubles the configured
-file allowance (5 to 10 GiB by default). Enable only for restore staging, then
-disable and restart before resuming publishers. It does not change stream limits.
-
-TCP 4222 is the only exposed port. The settings console is available only through
-HA ingress with an explicit HA identity allowlist, with no direct LAN port. This app does not configure clustering,
-leaf nodes, WebSockets, a monitoring port, accounts or JWT/NKey authentication.
-Keep the broker on your intended local network; it does not configure a firewall.
-
-## Backups and recovery
-
-Include this app in Home Assistant backups. Backups are cold: HA briefly stops the
-app, copies data and restarts it. They contain console settings, credentials and
-stored messages; protect them accordingly. Include HA's SSL folder separately
-in your backup plan, since the app's read-only mount is not its own data volume.
-
-Restore the full app backup to recover settings and data together. For portable
-JetStream snapshots, pause publishers, back up streams and consumers, restore,
-then verify counts, sequence numbers and consumers before resuming. Keep the
-original backup until verification passes.
+When upgrading from 0.5.x, copy settings from the old console into HA Configuration.
+The first start compares any saved console settings with HA's startup settings.
+If they differ, startup stops without changing stored messages or discarding the
+old settings. Use the prior version's console or a private backup to recover the
+values; never post a configuration containing credentials in an issue. Once they
+match and the broker starts, the old settings file is removed. The retired
+snapshot restore and console-administrator options have no effect.
 
 ## Logs and troubleshooting
 
-Open **Logs** for startup validation and standard NATS messages. Debug and message
-tracing stay disabled; the console does not print credentials or submitted settings.
-NATS errors may contain usernames and subject names; redact private information
-before sharing logs.
-
-- **Missing initial token:** enter 32–1024 characters in Configuration and restart.
-- **Authorization violation:** check the active access mode and client credentials.
-- **Permissions violation:** check the user's publish, subscribe and reply subjects.
-- **Certificate validation failed:** check filenames, expiry and matching key.
-  Restore the certificate files if TLS prevents startup, then restart.
-- **TLS client error:** check CA trust, hostname and optional client certificate.
-- **Connection refused:** check app status, hostname and the configured Network port.
+- **Startup configuration error:** check authentication mode, required passwords,
+  numeric ranges and certificate filenames in Configuration.
+- **Previous console settings differ:** complete the migration described above.
+- **Authentication error:** check the NATS connection credentials and auth mode.
+- **Permissions violation:** check publish, subscribe, JetStream API and reply subjects.
+- **TLS failure:** check CA trust, hostname, certificate expiry and matching key.
+- **Connection refused:** check app state and the Network port mapping.
 - **Storage limit:** inspect stream retention and free HA disk space.
-- **Apply failure/repeated restarts:** check the error before shutdown and available
-  disk space. Restore the last app backup if settings cannot be recovered.
 
-For support include app version, HA installation type, sanitized error lines and
-reproduction steps. Never attach credentials or private message data.
-
-## Learn more
-
-- [NATS documentation](https://docs.nats.io/)
-- [TLS](https://docs.nats.io/running-a-nats-service/configuration/securing_nats/tls)
-- [Subject authorization](https://docs.nats.io/running-a-nats-service/configuration/securing_nats/authorization)
-- [Report an app issue](https://github.com/jeffglousher/ha-nats/issues)
+Logs use standard app output; message tracing is disabled. For support include
+the app version, platform and sanitized errors, never credentials or message data.
