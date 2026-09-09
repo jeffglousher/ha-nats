@@ -307,9 +307,6 @@ def main():
     # Broker can traverse /data but cannot read the root-owned console settings.
     os.chown(DATA, 0, 10001)
     DATA.chmod(0o750)
-    CURRENT, _ = bootstrap()
-    write_config(CURRENT)
-    start_broker()
     httpd = ThreadingHTTPServer(('0.0.0.0', 8099), Handler)
     def shutdown(*_):
         STOP.set()
@@ -323,10 +320,14 @@ def main():
                     FAILED.set()
                     log('NATS exited unexpectedly. Stopping the app for Supervisor recovery.')
                     shutdown()
-    threading.Thread(target=monitor, daemon=True).start()
-    log('NATS is running. Open Web UI for encryption, access and storage settings.')
     try:
-        httpd.serve_forever()
+        CURRENT, _ = bootstrap()
+        write_config(CURRENT)
+        start_broker()
+        threading.Thread(target=monitor, daemon=True).start()
+        log('NATS is running. Open Web UI for encryption, access and storage settings.')
+        if not STOP.is_set():
+            httpd.serve_forever()
     finally:
         stop_broker()
         httpd.server_close()
