@@ -48,8 +48,8 @@ function fill(state) {
 async function refresh() {
   if(saving) return;
   if(dirty && !window.confirm('Discard unsaved changes and refresh discovery?')) return;
-  try {const r=await fetch('./api/state');if(!r.ok)throw Error('Open this page from Home Assistant.');fill(await r.json());$('message').textContent='';}
-  catch(e){$('message').textContent=e.message;$('message').className='error';}
+  try {const r=await fetch('./api/state');const state=await r.json();if(!r.ok)throw Error(state.error || 'Open this page from Home Assistant.');fill(state);$('message').textContent='';}
+  catch(e){current=null;$('health').textContent='Console unavailable';$('security').textContent='Access required';$('cert-status').textContent='Settings are hidden until console access is granted.';show();$('message').textContent=e.message;$('message').className='error';}
 }
 $('settings').addEventListener('input',()=>{dirty=true;show();});
 $('settings').addEventListener('change',show);

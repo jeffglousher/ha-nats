@@ -1,5 +1,5 @@
 name: NATS
-version: "0.5.1"
+version: "0.5.2"
 slug: pbscar_nats
 description: NATS messaging with local TLS, client permissions, persistent JetStream and an HA settings console.
 arch:
@@ -25,7 +25,10 @@ watchdog: tcp://[HOST]:[PORT:4222]
 options:
   token: ""
   restore_mode: false
+  console_admin_user_ids: []
 schema:
   token: password
   restore_mode: bool
+  console_admin_user_ids:
+    - "match(^[0-9a-f]{32}$)"
 url: https://github.com/jeffglousher/ha-nats
