@@ -102,6 +102,7 @@ def validate(value, old=None):
     if cfg['tls']:
         cert, key = ssl_file(cfg['cert_file']), ssl_file(cfg['key_file'])
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
         try:
             context.load_cert_chain(cert, key)
             subprocess.run(['openssl', 'x509', '-checkend', '0', '-noout', '-in', str(cert)], check=True, capture_output=True)

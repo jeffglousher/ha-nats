@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-source = Path(__file__).resolve().parents[1] / 'server.py'
+source = Path(__file__).resolve().parent.parent / 'server.py'
 if not source.exists():
     source = Path('/opt/nats-console/server.py')
 spec = importlib.util.spec_from_file_location('console', source)

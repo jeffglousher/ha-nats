@@ -63,6 +63,7 @@ def connect(password='p' * 32, trusted=True, hostname='localhost'):
             initial += sock.recv(1)
         assert json.loads(initial[5:])['tls_required']
         context = ssl.create_default_context(cafile='/ssl/fullchain.pem' if trusted else None)
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
         secure = context.wrap_socket(sock, server_hostname=hostname)
         stream = secure.makefile('rb')
         secure.sendall(b'CONNECT ' + json.dumps({'user': 'reader', 'pass': password}).encode() + b'\r\nPING\r\n')
