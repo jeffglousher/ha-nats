@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.1
+
+- Make the non-root runtime check compatible with Home Assistant kernels that omit the optional process-children interface.
+
+## 0.5.0
+
+Add an administrator-only HA ingress settings console with certificate discovery, TLS and optional client certificate verification, per-user subject permissions, and storage/connection limits. Saved secrets remain hidden; settings are validated before applying. Existing token configuration remains compatible.
+
+## 0.4.1
+
+Apply Alpine security updates during builds, including patched OpenSSL libraries.
+
 ## 0.4.0
 
 Update the pinned server to NATS 2.14.6. Validate restore-mode types and token size before startup. Expand negative authentication and file-permission checks.
