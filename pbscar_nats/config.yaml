@@ -1,0 +1,23 @@
+name: NATS
+version: "0.4.0"
+slug: pbscar_nats
+description: NATS messaging server with token authentication and persistent JetStream.
+arch:
+  - amd64
+  - aarch64
+startup: services
+boot: auto
+backup: cold
+init: false
+ports:
+  4222/tcp: 4222
+ports_description:
+  4222/tcp: Authenticated NATS clients
+watchdog: tcp://[HOST]:[PORT:4222]
+options:
+  token: ""
+  restore_mode: false
+schema:
+  token: password
+  restore_mode: bool
+url: https://github.com/jeffglousher/ha-nats
