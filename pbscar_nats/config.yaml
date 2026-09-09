@@ -1,5 +1,5 @@
 name: NATS
-version: "0.5.0"
+version: "0.5.1"
 slug: pbscar_nats
 description: NATS messaging with local TLS, client permissions, persistent JetStream and an HA settings console.
 arch:
