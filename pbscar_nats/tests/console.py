@@ -94,7 +94,13 @@ try:
         else:
             stream.close(); sock.close()
             raise AssertionError('invalid TLS/auth client accepted')
-    assert not Path('/data/console.json').exists(), 'matched legacy configuration was not retired'
+    for _ in range(30):
+        assert p.poll() is None, 'broker exited during startup completion'
+        if not Path('/data/console.json').exists():
+            break
+        time.sleep(.1)
+    else:
+        raise AssertionError('matched legacy configuration was not retired')
     try:
         unexpected = socket.create_connection(('127.0.0.1', 8099), 1)
     except ConnectionRefusedError:
