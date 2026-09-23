@@ -1,4 +1,4 @@
-FROM nats:2.14.6-alpine@sha256:ad7a43eb7e3337c3c38ce5d784d1461791f95f730f252d2b25eee699752a0ca3 AS runtime
+FROM nats:2.15.0-alpine@sha256:ac8f88a6494bffc2c2a5289a0ca61cb28a9145c11ba5677cf24265d07f46d8d4 AS runtime
 USER root
 RUN apk upgrade --no-cache && apk add --no-cache jq su-exec python3 openssl \
     && addgroup -S -g 10001 natsapp && adduser -S -D -H -u 10001 -G natsapp natsapp
