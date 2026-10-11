@@ -5,12 +5,13 @@ RUN apk upgrade --no-cache && apk add --no-cache git
 ENV GOTOOLCHAIN=go1.27.2
 WORKDIR /src
 RUN git init . && git remote add origin https://github.com/nats-io/nats-server.git \
-    && git fetch --depth 1 origin b2fd3efc7456b11b06a54877ad6f6ccfb911edb4 \
+    && git fetch --depth 1 origin tag v2.15.1 \
     && git checkout --detach FETCH_HEAD \
+    && test "$(git rev-parse HEAD)" = b2fd3efc7456b11b06a54877ad6f6ccfb911edb4 \
     && CGO_ENABLED=0 go build -trimpath -o /nats-server . \
     && /nats-server --version
 FROM nats:2.15.0-alpine@sha256:ac8f88a6494bffc2c2a5289a0ca61cb28a9145c11ba5677cf24265d07f46d8d4 AS runtime
-COPY --from=server /nats-server /nats-server
+COPY --from=server /nats-server /usr/local/bin/nats-server
 USER root
 RUN apk upgrade --no-cache && apk add --no-cache jq su-exec python3 openssl \
     && addgroup -S -g 10001 natsapp && adduser -S -D -H -u 10001 -G natsapp natsapp
