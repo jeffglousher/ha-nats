@@ -1,10 +1,13 @@
-# Release readiness — 0.6.0
+# Release readiness: 0.6.2
 
-This release moves broker startup settings into HA Configuration and removes
-the separate settings server. Native amd64/aarch64 CI runs startup validation,
-authentication, TLS/ACL, persistence and migration regressions, followed by
-vulnerability scanning. CodeQL, workflow lint and secret checks remain required.
+The container builds official NATS Server 2.15.1 with Go 1.27.2. Startup settings
+come from Home Assistant Configuration. Existing JetStream data stays in the
+add-on's persistent data directory across managed updates.
 
-Before deployment, verify passing checks and take a cold backup. Verify an
-existing installation's settings match the new HA configuration, then confirm
-client reconnection and stored streams after the managed update. See RELEASING.md.
+The image checks cover startup, authentication, TLS and subject permissions,
+persistence, configuration validation and vulnerability scanning on amd64 and
+aarch64. Workflow lint, secret checks and CodeQL also run in this repository.
+
+Before deployment, verify the current image checks and take a scoped backup.
+After the managed update, confirm the server version, client reconnection,
+configured subjects, retained streams and consumer counts. Follow RELEASING.md.
