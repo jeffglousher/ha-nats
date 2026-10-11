@@ -1,5 +1,5 @@
 name: NATS
-version: 0.6.1
+version: 0.6.2
 slug: pbscar_nats
 description: NATS messaging with persistent JetStream, TLS and client permissions
   configured in Home Assistant.
