@@ -1,18 +1,14 @@
-# The official 2.15.1 release precedes its Docker tag. Verify release archives
-# on both supported architectures and replace only the server executable.
-FROM nats:2.15.0-alpine@sha256:ac8f88a6494bffc2c2a5289a0ca61cb28a9145c11ba5677cf24265d07f46d8d4 AS server
-USER root
-RUN case "$(uname -m)" in \
-      x86_64) server_arch=amd64; server_sha=bf5edc7b1ce98e885c368cb43a886eb148dc5d0551d99f3cf6141fb5e1954c70 ;; \
-      aarch64) server_arch=arm64; server_sha=e2fbab4cad7d3c76e3052eb959570393c9d73ba756b70bf8e9eea61e9ae6d49c ;; \
-      *) exit 1 ;; \
-    esac \
-    && wget -q -O /tmp/server.tar.gz "https://github.com/nats-io/nats-server/releases/download/v2.15.1/nats-server-v2.15.1-linux-${server_arch}.tar.gz" \
-    && printf '%s  /tmp/server.tar.gz\n' "$server_sha" | sha256sum -c - \
-    && tar -xzf /tmp/server.tar.gz -C /tmp \
-    && cp "/tmp/nats-server-v2.15.1-linux-${server_arch}/nats-server" /nats-server \
+# Build the exact official 2.15.1 source with patched Go 1.27.2. The upstream
+# binary was built with Go 1.27.1 and contains fixed standard-library findings.
+FROM golang:1.27.2-alpine@sha256:f92b6ef800e499660581efdabdf25d9d817a9d124eaf900924f0504e7e27e12d AS server
+RUN apk upgrade --no-cache && apk add --no-cache git
+ENV GOTOOLCHAIN=go1.27.2
+WORKDIR /src
+RUN git init . && git remote add origin https://github.com/nats-io/nats-server.git \
+    && git fetch --depth 1 origin b2fd3efc7456b11b06a54877ad6f6ccfb911edb4 \
+    && git checkout --detach FETCH_HEAD \
+    && CGO_ENABLED=0 go build -trimpath -o /nats-server . \
     && /nats-server --version
-
 FROM nats:2.15.0-alpine@sha256:ac8f88a6494bffc2c2a5289a0ca61cb28a9145c11ba5677cf24265d07f46d8d4 AS runtime
 COPY --from=server /nats-server /nats-server
 USER root
