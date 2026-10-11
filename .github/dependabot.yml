@@ -4,6 +4,11 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      # init and analyze must run the same CodeQL Action release.
+      codeql-action:
+        patterns:
+          - github/codeql-action/*
   - package-ecosystem: docker
     directory: /pbscar_nats
     schedule:
