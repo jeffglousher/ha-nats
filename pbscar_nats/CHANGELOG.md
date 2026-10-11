@@ -1,3 +1,9 @@
+# 0.6.2
+
+- Run NATS Server 2.15.1 from pinned official source with patched Go 1.27.2 on
+  amd64 and aarch64; retain the persistent JetStream volume and HA settings.
+- Pin the available 2.15.0 Alpine base by digest until the 2.15.1 Docker tag exists.
+
 # 0.6.1
 
 - Add one-time local NUI connection provisioning over HA internal app DNS.

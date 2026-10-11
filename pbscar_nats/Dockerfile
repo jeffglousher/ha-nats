@@ -1,4 +1,17 @@
-FROM nats:2.14.6-alpine@sha256:ad7a43eb7e3337c3c38ce5d784d1461791f95f730f252d2b25eee699752a0ca3 AS runtime
+# Build the exact official 2.15.1 source with patched Go 1.27.2. The upstream
+# binary was built with Go 1.27.1 and contains fixed standard-library findings.
+FROM golang:1.27.2-alpine@sha256:f92b6ef800e499660581efdabdf25d9d817a9d124eaf900924f0504e7e27e12d AS server
+RUN apk upgrade --no-cache && apk add --no-cache git
+ENV GOTOOLCHAIN=go1.27.2
+WORKDIR /src
+RUN git init . && git remote add origin https://github.com/nats-io/nats-server.git \
+    && git fetch --depth 1 origin tag v2.15.1 \
+    && git checkout --detach FETCH_HEAD \
+    && test "$(git rev-parse HEAD)" = b2fd3efc7456b11b06a54877ad6f6ccfb911edb4 \
+    && CGO_ENABLED=0 go build -trimpath -o /nats-server . \
+    && /nats-server --version
+FROM nats:2.15.0-alpine@sha256:ac8f88a6494bffc2c2a5289a0ca61cb28a9145c11ba5677cf24265d07f46d8d4 AS runtime
+COPY --from=server /nats-server /usr/local/bin/nats-server
 USER root
 RUN apk upgrade --no-cache && apk add --no-cache jq su-exec python3 openssl \
     && addgroup -S -g 10001 natsapp && adduser -S -D -H -u 10001 -G natsapp natsapp
