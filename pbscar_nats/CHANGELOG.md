@@ -1,3 +1,9 @@
+# 0.6.3
+
+- Exclude JetStream data from Home Assistant app backups while retaining broker
+  configuration. Keep live storage in place and use hot backups to avoid broker
+  interruptions. Document configuration-only restore limitations.
+
 # 0.6.2
 
 - Run NATS Server 2.15.1 from pinned official source with patched Go 1.27.2 on

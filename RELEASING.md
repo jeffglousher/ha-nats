@@ -9,7 +9,8 @@ Before making a repository public or publishing a release:
 - Pass manifest checks and native amd64/arm64 image builds and runtime tests.
 - Review the image/dependency vulnerability scan; document or fix findings.
 - Test a fresh install through the repository URL on Home Assistant OS, plus an
-  in-place upgrade and cold backup/restore in a disposable installation.
+  in-place upgrade and configuration-only backup/restore in a disposable
+  installation; verify that JetStream is excluded and settings are retained.
 - For NUI, test a fresh browser through ingress, including live WebSockets and
   rejection of anonymous/direct access. For NATS, test authenticated clients,
   invalid credentials, persistent streams and consumer recovery.
