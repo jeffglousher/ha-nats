@@ -7,7 +7,8 @@ folder=configs[0].parent
 config=yaml.safe_load(configs[0].read_text())
 assert re.fullmatch(r'\d+\.\d+\.\d+',config['version'])
 assert set(config['arch'])=={'amd64','aarch64'}
-assert config['backup']=='cold' and config['boot']=='auto'
+assert config['backup']=='hot' and config['boot']=='auto'
+assert config['backup_exclude']==['*/jetstream']
 for flag in ['host_network','homeassistant_api','docker_api','full_access','privileged']:
     assert not config.get(flag),flag
 assert config.get('hassio_api') and config.get('hassio_role') == 'default'

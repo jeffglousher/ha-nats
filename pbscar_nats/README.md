@@ -7,7 +7,7 @@ A lightweight messaging server for connecting applications and services.
 - Shared-token or individual-user authentication with subject permissions.
 - Optional TLS using certificates from HA’s shared SSL folder.
 - Startup configuration managed directly by Home Assistant.
-- Automatic startup, watchdog recovery and Home Assistant backups.
+- Automatic startup, watchdog recovery and configuration-only Home Assistant backups.
 
 Set an authentication token in **Configuration**, then start the app.
 Clients connect to `nats://HOME_ASSISTANT_HOST:4222` using that token.

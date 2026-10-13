@@ -1,5 +1,5 @@
 name: NATS
-version: 0.6.2
+version: 0.6.3
 slug: pbscar_nats
 description: NATS messaging with persistent JetStream, TLS and client permissions
   configured in Home Assistant.
@@ -8,7 +8,11 @@ arch:
 - aarch64
 startup: services
 boot: auto
-backup: cold
+# Configuration backups do not need to interrupt broker clients.
+backup: hot
+backup_exclude:
+# Supervisor matches its host-side paths; excluding the directory skips its tree.
+- '*/jetstream'
 init: false
 map:
 - type: ssl

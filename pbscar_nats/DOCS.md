@@ -69,9 +69,18 @@ the restore, then return to an allowance that fits the resulting data.
 
 ## Updating and restoring
 
-Updates and restarts preserve JetStream data. Take a cold app backup before
-configuration changes and restore the full app backup to recover settings and
-data together. Uninstalling can remove app data.
+Updates and restarts preserve JetStream data. Home Assistant app backups retain
+broker configuration and exclude `/data/jetstream`, including streams, key/value
+buckets and object stores. Backups run without stopping NATS. Live data stays in
+its existing volume; no storage migration is needed. Supervisor may also include
+the locally built app image, so a configuration backup is not necessarily tiny.
+
+These backups cannot recover messages or buckets after disk loss. Keep a separate
+JetStream recovery plan for data that must survive host loss. Restoring an app
+backup replaces its data directory: restoring a configuration-only backup can
+therefore remove existing JetStream data. Do not use app restore as a settings
+rollback on a live broker; reapply saved HA Configuration instead. Older backups
+may still contain JetStream data. Uninstalling can remove app data.
 
 When upgrading from 0.5.x, copy settings from the old console into HA Configuration.
 The first start compares any saved console settings with HA's startup settings.
