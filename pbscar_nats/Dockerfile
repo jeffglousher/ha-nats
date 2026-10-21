@@ -10,7 +10,7 @@ RUN git init . && git remote add origin https://github.com/nats-io/nats-server.g
     && test "$(git rev-parse HEAD)" = b2fd3efc7456b11b06a54877ad6f6ccfb911edb4 \
     && CGO_ENABLED=0 go build -trimpath -o /nats-server . \
     && /nats-server --version
-FROM nats:2.15.0-alpine@sha256:ac8f88a6494bffc2c2a5289a0ca61cb28a9145c11ba5677cf24265d07f46d8d4 AS runtime
+FROM nats:2.15.1-alpine@sha256:2ae57dfba3063d5e25fecb75256118c0882a1a2d2cf7d0fba17a7c701df956f6 AS runtime
 COPY --from=server /nats-server /usr/local/bin/nats-server
 USER root
 RUN apk upgrade --no-cache && apk add --no-cache jq su-exec python3 openssl \
