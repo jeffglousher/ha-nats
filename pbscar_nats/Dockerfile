@@ -1,6 +1,6 @@
 # Build the exact official 2.15.1 source with patched Go 1.27.2. The upstream
 # binary was built with Go 1.27.1 and contains fixed standard-library findings.
-FROM golang:1.27.2-alpine@sha256:f92b6ef800e499660581efdabdf25d9d817a9d124eaf900924f0504e7e27e12d AS server
+FROM golang:1.27.3-alpine@sha256:d200d2dd76b03a99b52651fd1325aff7dcd35422c35c01bac56571b0507f3deb AS server
 RUN apk upgrade --no-cache && apk add --no-cache git
 ENV GOTOOLCHAIN=go1.27.2
 WORKDIR /src
